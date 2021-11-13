@@ -1,0 +1,55 @@
+{
+  "name": "node-ble",
+  "description": "Bluetooth Low Energy (BLE) library written with pure Node.js (no bindings) - baked by Bluez via DBus",
+  "version": "1.6.0",
+  "repository": "https://github.com/chrvadala/node-ble.git",
+  "author": "chrvadala",
+  "license": "MIT",
+  "main": "./src/index.js",
+  "typings": "./src/index.d.ts",
+  "files": [
+    "*.md",
+    "src",
+    "test",
+    "test-e2e",
+    "example.js"
+  ],
+  "keywords": [
+    "bluetooth-low-energy",
+    "ble",
+    "bluetooth-peripherals",
+    "bluez",
+    "bluez-dbus",
+    "bluetooth",
+    "bluetooth-le"
+  ],
+  "homepage": "https://github.com/chrvadala/node-ble",
+  "scripts": {
+    "test": "npm run test:standard && npm run test:coverage && npm run test:typescript",
+    "test:jest": "jest --testPathIgnorePatterns=e2e.spec.js",
+    "test:coverage": "jest --testPathIgnorePatterns=e2e.spec.js --coverage",
+    "test:e2e": "jest",
+    "test:standard": "standard",
+    "test:typescript": "tsc --strict src/index.d.ts"
+  },
+  "dependencies": {
+    "dbus-next": "^0.10.2",
+    "dotenv": "^10.0.0"
+  },
+  "devDependencies": {
+    "@babel/plugin-proposal-class-properties": "^7.16.0",
+    "@babel/plugin-proposal-decorators": "^7.16.0",
+    "@types/jest": "^27.0.2",
+    "@types/node": "^16.11.6",
+    "jest": "^27.3.1",
+    "standard": "^16.0.4",
+    "typescript": "^4.4.4"
+  },
+  "standard": {
+    "ignore": [
+      "example.js",
+      "test/__interfaces/*.js"
+    ]
+  },
+  "funding": "https://www.paypal.me/chrvadala/25"
+}
