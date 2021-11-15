@@ -1,22 +1,15 @@
-# node-ble
+# Heartbeat Scanner
 
-Bluetooth Low Energy (BLE) library written with pure Node.js (no bindings) - baked by Bluez via DBus
+Using [Bluetooth Low Energy (BLE) library](https://github.com/chrvadala/node-ble) to read Polar Verity sensor
 
-[![chrvadala](https://img.shields.io/badge/website-chrvadala-orange.svg)](https://chrvadala.github.io)
-[![Test](https://github.com/chrvadala/node-ble/workflows/Test/badge.svg)](https://github.com/chrvadala/node-ble/actions)
-[![Coverage Status](https://coveralls.io/repos/github/chrvadala/node-ble/badge.svg?branch=master)](https://coveralls.io/github/chrvadala/node-ble?branch=master)
-[![npm](https://img.shields.io/npm/v/node-ble.svg?maxAge=2592000?style=plastic)](https://www.npmjs.com/package/node-ble)
-[![Downloads](https://img.shields.io/npm/dm/node-ble.svg)](https://www.npmjs.com/package/node-ble)
-[![Donate](https://img.shields.io/badge/donate-PayPal-green.svg)](https://www.paypal.me/chrvadala/25)
+# Bluetooth Low Energy (BLE) library Setup
 
-# Setup
 ```sh
 npm install node-ble
 ```
 
-# Example
-
 ## Provide permissions
+
 In order to allow a connection with the DBus daemon, you have to set up right permissions.
 
 Create the file `/etc/dbus-1/system.d/node-ble.conf` with the following content (customize with userid)
@@ -37,6 +30,7 @@ Create the file `/etc/dbus-1/system.d/node-ble.conf` with the following content 
 ```
 
 ## STEP 1: Get Adapter
+
 To start a Bluetooth Low Energy (BLE) connection you need a Bluetooth adapter.
 
 ```javascript
@@ -46,13 +40,16 @@ const adapter = await bluetooth.defaultAdapter()
 ```
 
 ## STEP 2: Start discovering
+
 In order to find a Bluetooth Low Energy device out, you have to start a discovery operation.
+
 ```javascript
 if (! await adapter.isDiscovering())
   await adapter.startDiscovery()
 ```
 
 ## STEP 3: Get a device, Connect and Get GATT Server
+
 Use an adapter to get a remote Bluetooth device, then connect to it and bind to the GATT (Generic Attribute Profile) server.
 
 ```javascript
@@ -61,7 +58,8 @@ await device.connect()
 const gattServer = await device.gatt()
 ```
 
-## STEP 4a: Read and write a characteristic.
+## STEP 4a: Read and write a characteristic
+
 ```javascript
 const service1 = await gattServer.getPrimaryService('uuid')
 const characteristic1 = await service1.getCharacteristic('uuid')
@@ -70,7 +68,8 @@ const buffer = await characteristic1.readValue()
 console.log(buffer)
 ```
 
-## STEP 4b: Subscribe to a characteristic.
+## STEP 4b: Subscribe to a characteristic
+
 ```javascript
 const service2 = await gattServer.getPrimaryService('uuid')
 const characteristic2 = await service2.getCharacteristic('uuid')
@@ -82,13 +81,16 @@ await characteristic2.stopNotifications()
 ```
 
 ### STEP 5: Disconnect
+
 When you have done you can disconnect and destroy the session.
+
 ```javascript
 await device.disconnect()
 destroy()
 ```
 
 # Reference
+
 ```javascript
 const {createBluetooth} = require('node-ble')
 const {bluetooth, destroy} = createBluetooth()
@@ -100,6 +102,7 @@ const {bluetooth, destroy} = createBluetooth()
 |`void destroy()` |
 
 ## `Bluetooth`
+
 | Method | Description |
 | --- | --- |
 | `Promise<String[]> adapters()` | List of available adapters |
@@ -107,6 +110,7 @@ const {bluetooth, destroy} = createBluetooth()
 | `Promise<Adapter> getAdapter(String adapter)` | Get a specific adapter (one of available in `adapters()`)|
 
 ## `Adapter`
+
 | Method | Description |
 | --- | --- |
 | `Promise<String> getAddress()` | The Bluetooth device address. |
@@ -123,6 +127,7 @@ const {bluetooth, destroy} = createBluetooth()
 | `Promise<String> toString()`| User friendly adapter name |
 
 ## `Device` extends `EventEmitter`
+
 | Method | Description |
 | --- | --- |
 | `Promise<String> getName()` | The Bluetooth remote name. |
@@ -145,21 +150,24 @@ const {bluetooth, destroy} = createBluetooth()
 | `disconnect` | Disconnected from device |
 
 ## `GattServer`
+
 | Method | Description |
 | --- | --- |
 | `Promise<String[]> services()` | List of available services |
 | `Promise<GattService> getPrimaryService(String uuid)` | Returns a specific Primary Service |
 
 ## `GattService`
+
 | Method | Description |
 | --- | --- |
-| `Promise<bool> isPrimary()` | Indicates whether or not this GATT service is a	primary service. |
+| `Promise<bool> isPrimary()` | Indicates whether or not this GATT service is a primary service. |
 | `Promise<String> getUUID()` | 128-bit service UUID. |
 | `Promise<String[]> characteristics()` | List of available characteristic UUIDs. |
 | `Promise<GattCharacteristic> getCharacteristic(String uuid)` | Returns a specific characteristic. |
 | `Promise<String> toString()` | User friendly service name. |
 
 ## `GattCharacteristic` extends `EventEmitter`
+
 | Method | Description |
 | --- | --- |
 | `Promise<String> getUUID()` | 128-bit characteristic UUID. |
@@ -176,15 +184,18 @@ const {bluetooth, destroy} = createBluetooth()
 | `valuechanged` | New value is notified. (invoke `startNotifications()` to enable notifications)
 
 ## Compatibility
+
 This library works on many architectures supported by Linux.
-It leverages on Bluez driver, a component supported by the following platforms and distributions https://www.bluez.org/about
+It leverages on Bluez driver, a component supported by the following platforms and distributions <https://www.bluez.org/about>
 
 *Node-ble* has been tested on the following environment:
+
 - Raspbian GNU/Linux 10 (buster)
 - Ubuntu 18.04.4 LTS
 - Ubuntu 20.04 LTS
 
 ## Changelog
+
 - **0.x** - Beta version
 - **1.0** - First official version
 - **1.1** - Migrates to gh-workflows
@@ -195,11 +206,13 @@ It leverages on Bluez driver, a component supported by the following platforms a
 - **1.6** - Upgrades deps and removes some dependencies; migrates to npm; improves gh-actions
 
 ## Contributors
+
 - [chrvadala](https://github.com/chrvadala) (author)
 - [pascalopitz](https://github.com/pascalopitz)
 - [lupol](https://github.com/lupol)
 
 ## Run tests
+
 In order to run test suite you have to set up right DBus permissions.
 
 Create the file `/etc/dbus-1/system.d/node-ble-test.conf` with the following content (customize with userid)
@@ -217,6 +230,7 @@ Create the file `/etc/dbus-1/system.d/node-ble-test.conf` with the following con
 ```
 
 ### Unit tests
+
 ```
 npm test
 ```
@@ -226,6 +240,7 @@ npm test
 The end to end test will try to connect to a real bluetooth device and read some characteristics. To do that, you need two different devices.
 
 #### Device 1
+
 ```shell script
 wget https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/test/example-advertisement
 wget https://git.kernel.org/pub/scm/bluetooth/bluez.git/plain/test/example-gatt-server
@@ -235,23 +250,27 @@ hcitool dev #this command shows bluetooth address
 ```
 
 #### Device 2
+
 ```shell script
 TEST_DEVICE=00:00:00:00:00:00 npm run test:e2e
 ```
 
 ## References
-- https://git.kernel.org/pub/scm/bluetooth/bluez.git/tree/doc/adapter-api.txt
-- https://git.kernel.org/pub/scm/bluetooth/bluez.git/tree/doc/device-api.txt
-- https://git.kernel.org/pub/scm/bluetooth/bluez.git/tree/doc/gatt-api.txt
-- https://webbluetoothcg.github.io/web-bluetooth - method signatures follow, when possible, WebBluetooth standards
-- https://developers.google.com/web/updates/2015/07/interact-with-ble-devices-on-the-web - method signatures follow, when possible, WebBluetooth standards
+
+- <https://git.kernel.org/pub/scm/bluetooth/bluez.git/tree/doc/adapter-api.txt>
+- <https://git.kernel.org/pub/scm/bluetooth/bluez.git/tree/doc/device-api.txt>
+- <https://git.kernel.org/pub/scm/bluetooth/bluez.git/tree/doc/gatt-api.txt>
+- <https://webbluetoothcg.github.io/web-bluetooth> - method signatures follow, when possible, WebBluetooth standards
+- <https://developers.google.com/web/updates/2015/07/interact-with-ble-devices-on-the-web> - method signatures follow, when possible, WebBluetooth standards
 
 ## Similar libraries
-- https://github.com/noble/noble
-- https://github.com/abandonware/noble (noble fork)
-- https://www.npmjs.com/package/node-web-bluetooth
+
+- <https://github.com/noble/noble>
+- <https://github.com/abandonware/noble> (noble fork)
+- <https://www.npmjs.com/package/node-web-bluetooth>
 
 ## Useful commands
+
 | Command | Description |
 | --- | --- |
 | rm -r /var/lib/bluetooth/* | Clean Bluetooth cache |
