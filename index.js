@@ -26,9 +26,10 @@ async function connectDevice() {
   console.log("Connected!");
 
   const gattServer = await device.gatt();
+
  // console.log('gattServer', gattServer._services);
   var services = await gattServer.services();
-
+  console.log('services', services);
 
 //  const service1 = await gattServer.getPrimaryService('0000180d-0000-1000-8000-00805f9b34fb')
 // const characteristic1 = await service1.getCharacteristic('00002a37-0000-1000-8000-00805f9b34fb')
@@ -36,25 +37,39 @@ async function connectDevice() {
 // const buffer = await characteristic1.readValue()
 // console.log(buffer)
 
-  console.log('services', services.toString());
+  
 
-  const service = await gattServer.getPrimaryService(
+ /* const service = await gattServer.getPrimaryService(
     "0000180d-0000-1000-8000-00805f9b34fb"
+  );*/
+  const service = await gattServer.getPrimaryService(
+    "00001801-0000-1000-8000-00805f9b34fb"
   );
 
-
-  const heartrate = await service.getCharacteristic(
+  console.log( await service.characteristics());
+ /* const heartrate = await service.getCharacteristic(
     "00002a37-0000-1000-8000-00805f9b34fb"
+  );*/
+  const heartrate = await service.getCharacteristic(
+    "00002a05-0000-1000-8000-00805f9b34fb"
   );
-
+ //const buffer = await heartrate.readValue()
+ //console.log(buffer)
+  console.log(await heartrate.getFlags());
   _HEARTRATE = heartrate;
 
   await heartrate.startNotifications();
   console.log('LOADING...');
   //setTimeout(async () => {
-    let checkBPM = await checkBpm();
-    console.log('READY')
+    /*console.log('Current BPM is: ' + await getCurrentBpm());
+    if(await getCurrentBpm() != 0){
+      console.log('Waiting...')
+    }*/
+    const checkBPM = await checkBpm();
+   
     if(checkBPM){
+      console.log('checkBPM', checkBPM);
+      console.log('Ready...!')
       _USERBPM = await getBpm();
       console.log('bpm is:', _USERBPM);
       process.exit(1);
@@ -65,23 +80,39 @@ async function connectDevice() {
   //return BPM
 }
 
-async function checkBpm(){
-  return new Promise((resolve, reject) => {
-    _HEARTRATE.on("valuechanged", (buffer) => {
+async function polarEventListener(){
+  let currentBpm;
+  return new Promise(async (resolve, reject) => {
+    _HEARTRATE.on("valuechanged", async (buffer) => {
+      console.log('buffer', buffer);
       let json = JSON.stringify(buffer);
       let bpm = Math.max.apply(null, JSON.parse(json).data);
-      console.log('bpm', bpm);
-      //console.log('bpm', bpm);
+      resolve(bpm);
+    })
+  })
+
+}
+
+async function getCurrentBpm(){
+  return new Promise(async (resolve, reject) => {
+      let bpm = await polarEventListener();
+      resolve(bpm)
+  })
+}
+
+
+async function checkBpm(){
+  return new Promise(async (resolve, reject) => {
+      let bpm = await polarEventListener();
+
       if(bpm == 0){
         resolve(true)
       }
-    })
-
   })
 }
 
 async function getBpm() {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     let _USERBPM
     timerInstance.addEventListener("secondsUpdated", function (e) {
       console.log(timerInstance.getTimeValues().toString());
@@ -91,14 +122,12 @@ async function getBpm() {
       resolve(_USERBPM);
     });
 
-    _HEARTRATE.on("valuechanged", (buffer) => {
-      let json = JSON.stringify(buffer);
-      let bpm = Math.max.apply(null, JSON.parse(json).data);
+    let bpm = await polarEventListener();
       if(bpm != 0){
         _USERBPM = bpm;
         timerInstance.start({ countdown: true, startValues: { seconds: 10 } });
       } 
-    });
+
   });
 }
 
