@@ -2,17 +2,19 @@ require("dotenv").config();
 const { createBluetooth } = require("./src");
 var { Timer } = require("easytimer.js");
 var timerInstance = new Timer();
-const { POLAR_MAC_ADRESSE } = process.env;
+const axios = require('axios');
+const { POLAR_MAC_ADRESSE, RANDOMUSER_ENDPOINT } = process.env;
 
 let _USERBPM;
+let _USER;
 let _HEARTRATE = null;
 let BPMNOTZERO = false;
 
 async function connectDevice() {
- 
-  //console.log('process.env.USER ', process.env.TT );
-  //process.env.TT = true;
-  console.log('process.env.TT', process.env.TT);
+  _USER = await axios.get(RANDOMUSER_ENDPOINT)
+  console.log('_USER', _USER.data);
+  console.log('RANDOMUSER_ENDPOINT', RANDOMUSER_ENDPOINT);
+  //console.log('_USER', _USER);
   const { bluetooth, destroy } = createBluetooth();
   const adapter = await bluetooth.defaultAdapter();
 
@@ -37,25 +39,16 @@ async function connectDevice() {
 // const buffer = await characteristic1.readValue()
 // console.log(buffer)
 
-  
 
- /* const service = await gattServer.getPrimaryService(
+ const service = await gattServer.getPrimaryService(
     "0000180d-0000-1000-8000-00805f9b34fb"
-  );*/
-  const service = await gattServer.getPrimaryService(
-    "00001801-0000-1000-8000-00805f9b34fb"
+  );
+ const heartrate = await service.getCharacteristic(
+    "00002a37-0000-1000-8000-00805f9b34fb"
   );
 
-  console.log( await service.characteristics());
- /* const heartrate = await service.getCharacteristic(
-    "00002a37-0000-1000-8000-00805f9b34fb"
-  );*/
-  const heartrate = await service.getCharacteristic(
-    "00002a05-0000-1000-8000-00805f9b34fb"
-  );
  //const buffer = await heartrate.readValue()
  //console.log(buffer)
-  console.log(await heartrate.getFlags());
   _HEARTRATE = heartrate;
 
   await heartrate.startNotifications();
@@ -71,7 +64,8 @@ async function connectDevice() {
       console.log('checkBPM', checkBPM);
       console.log('Ready...!')
       _USERBPM = await getBpm();
-      console.log('bpm is:', _USERBPM);
+      await axios.POST(UPDATEUSER_ENDPOINT + _USER.ID, {'pulse': _USERBPM})
+
       process.exit(1);
     }
   //}, 15000);
