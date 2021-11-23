@@ -47,39 +47,55 @@ async function connectDevice() {
     }, 250);
   })();
 
-  _USER = await axios.get(USERS_ENDPOINT + 'randomUser').catch(function (error) {
-    if (error.response) {
-      console.log(error.response.data.message);
-      process.exit(1);
-    }
+  _USER = await axios.get(USERS_ENDPOINT + 'randomUser', {headers:{'Content-Type': 'application/json', 'Accept': 'application/json'}}).catch(function(error){
+   console.log(error)
+   process.exit(1);
+
   });
 
-  console.log('_USER', _USER.data._id );
-  await heartrate.startNotifications();
+  console.log(_USER.data._id);
+  await _HEARTRATE.startNotifications();
   await axios.put(PULSESENSORS_ENDPOINT + ID, {'state': 'loading'})
-  const checkBPM = await checkBpm();
-  _HEARTRATE.stopNotifications();
-
+const currentBpm = await getCurrentBpm(); 
+console.log(currentBpm); 
+const checkBPM = await checkBpm();
+await _HEARTRATE.stopNotifications();  	
   if(checkBPM){
     clearInterval(twirlTimer)
     process.stdout.write("\r\x1b[K")
     process.stdout.write('Ready!')
     await axios.put(PULSESENSORS_ENDPOINT + ID, {'state': 'ready'})
     //set a presence detection to start notification
-    _USERBPM = await getBpm();
+   
+   await _HEARTRATE.startNotifications();  
+ _USERBPM = await getBpm();
     console.log('_USERBPM', _USERBPM);
     await axios.put(USERS_ENDPOINT + _USER.data._id, {'pulse': _USERBPM})
     await axios.put(PULSESENSORS_ENDPOINT + ID, {'state': 'idle'})
-    process.exit(1);
   }
+await _HEARTRATE.stopNotifications();
+process.exit(1);
 }
+
+async function getCurrentBpm(){
+  return new Promise(async (resolve, reject) => {
+    _HEARTRATE.on("valuechanged", async (buffer) => {
+      let json = JSON.stringify(buffer);
+      let bpm = Math.max.apply(null, JSON.parse(json).data);
+         
+resolve(bpm);  
+    })
+  })
+}
+
 
 async function checkBpm(){
   return new Promise(async (resolve, reject) => {
     _HEARTRATE.on("valuechanged", async (buffer) => {
       let json = JSON.stringify(buffer);
       let bpm = Math.max.apply(null, JSON.parse(json).data);
-      if(bpm == 0){
+	  
+    if(bpm == 0){
         resolve(true)
       }
     })
@@ -97,14 +113,13 @@ async function getBpm() {
       resolve(_USERBPM);
     });
 
-    _HEARTRATE.startNotifications();
       _HEARTRATE.on("valuechanged", async (buffer) => {
         let json = JSON.stringify(buffer);
         let bpm = Math.max.apply(null, JSON.parse(json).data);
         if(bpm != 0){
           _USERBPM = bpm;
           await axios.put(PULSESENSORS_ENDPOINT + ID, {'state': 'scanning'})
-          timerInstance.start({ countdown: true, startValues: { seconds: 10 } });
+          timerInstance.start({ countdown: true, startValues: { seconds: 15 } });
         } 
       })
   });
