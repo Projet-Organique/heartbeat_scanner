@@ -74,7 +74,7 @@ async function connectDevice() {
     }, 250);
   })();*/
 
-  await axios.put(PULSESENSORS_ENDPOINT + ID, { 'state': 'loading' })
+  await axios.put(PULSESENSORS_ENDPOINT + ID, { 'state': 0 })
   state.set('Loading');
 
   const currentBPM = await getCurrentBPM();
@@ -89,7 +89,7 @@ async function connectDevice() {
     clearInterval(twirlTimer)
     process.stdout.write("\r\x1b[K")
     process.stdout.write('Ready!')
-    await axios.put(PULSESENSORS_ENDPOINT + ID, { 'state': 'ready' })
+    await axios.put(PULSESENSORS_ENDPOINT + ID, { 'state': 1 })
     state.set('Ready');
     //set a presence detection to start notification
 
@@ -99,8 +99,8 @@ async function connectDevice() {
     userBPM.set(_USERBPM);
     //console.log('_USERBPM', _USERBPM);
     await axios.put(USERS_ENDPOINT + _USER.data._id, { 'pulse': _USERBPM })
-    await axios.put(PULSESENSORS_ENDPOINT + ID, { 'state': 'idle' })
-    state.set('Idle');
+    await axios.put(PULSESENSORS_ENDPOINT + ID, { 'state': 3 })
+    state.set('done');
   }
   await _HEARTRATE.stopNotifications();
   process.exit(1);
@@ -157,7 +157,7 @@ async function scan() {
       let bpm = Math.max.apply(null, JSON.parse(json).data);
       if (bpm != 0) {
         _USERBPM = bpm;
-        await axios.put(PULSESENSORS_ENDPOINT + ID, { 'state': 'scanning' })
+        await axios.put(PULSESENSORS_ENDPOINT + ID, { 'state': 2 })
         timerInstance.start({ countdown: true, startValues: { seconds: 15 } });
       }
     })
