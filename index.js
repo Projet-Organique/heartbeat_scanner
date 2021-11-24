@@ -12,7 +12,7 @@ const state = io.metric({
 const polarBPM = io.metric({
   name: 'Polar BPM',
 })
-const userBPM = io.metric({
+const doneBPM = io.metric({
   name: 'User BPM after scan',
 })
 
@@ -55,9 +55,15 @@ async function connectDevice() {
   );
 
   _HEARTRATE = heartrate;
-
-  _USER = await axios.get(USERS_ENDPOINT + 'randomUser').catch(function (error) {
-    console.log(error)
+  _HEARTRATE.on("valuechanged", async (buffer) => {
+    let json = JSON.stringify(buffer);
+    let bpm = Math.max.apply(null, JSON.parse(json).data);
+    polarBPM.set(bpm);
+  })
+  _USER = await axios.get(USERS_ENDPOINT + 'randomUser').catch(async function (error) {
+    console.log(error.response.data.message)
+    await axios.put(PULSESENSORS_ENDPOINT + ID, { 'state': 4 })
+    state.set('No lantern!');
     process.exit(1);
   });
 
@@ -65,45 +71,37 @@ async function connectDevice() {
   lanternSelected.set(_USER);
   await _HEARTRATE.startNotifications();
 
-  /*var twirlTimer = (function () {
-    var P = ["\\", "|", "/", "-"];
-    var x = 0;
-    return setInterval(function () {
-      process.stdout.write("\r" + P[x++] + ' LOADING...');
-      x &= 3;
-    }, 250);
-  })();*/
-
   await axios.put(PULSESENSORS_ENDPOINT + ID, { 'state': 0 })
   state.set('Loading');
 
-  const currentBPM = await getCurrentBPM();
+  //const currentBPM = await getCurrentBPM();
   //console.log(currentBpm);
-  polarBPM.set(currentBPM); 
+  //polarBPM.set(currentBPM); 
 
   const readyToScan = await getScanState();
 
-  await _HEARTRATE.stopNotifications();
+  //await _HEARTRATE.stopNotifications();
 
   if (readyToScan) {
-    clearInterval(twirlTimer)
+    //clearInterval(twirlTimer)
     process.stdout.write("\r\x1b[K")
     process.stdout.write('Ready!')
     await axios.put(PULSESENSORS_ENDPOINT + ID, { 'state': 1 })
     state.set('Ready');
     //set a presence detection to start notification
 
-    await _HEARTRATE.startNotifications();
+    //await _HEARTRATE.startNotifications();
 
     _USERBPM = await scan();
-    userBPM.set(_USERBPM);
-    //console.log('_USERBPM', _USERBPM);
+    doneBPM.set(_USERBPM);
+    console.log('_USERBPM', _USERBPM);
     await axios.put(USERS_ENDPOINT + _USER.data._id, { 'pulse': _USERBPM })
     await axios.put(PULSESENSORS_ENDPOINT + ID, { 'state': 3 })
     state.set('done');
+    process.exit(1);
   }
-  await _HEARTRATE.stopNotifications();
-  process.exit(1);
+ // await _HEARTRATE.stopNotifications();
+
 }
 
 
@@ -146,7 +144,7 @@ async function scan() {
     let _USERBPM
     timerInstance.addEventListener("secondsUpdated", function (e) {
       timer.set(timerInstance.getTimeValues().toString())
-      //console.log(timerInstance.getTimeValues().toString());
+      console.log(timerInstance.getTimeValues().toString());
     });
     timerInstance.addEventListener("targetAchieved", async function (e) {
       resolve(_USERBPM);
@@ -155,9 +153,11 @@ async function scan() {
     _HEARTRATE.on("valuechanged", async (buffer) => {
       let json = JSON.stringify(buffer);
       let bpm = Math.max.apply(null, JSON.parse(json).data);
+        console.log(bpm);
       if (bpm != 0) {
         _USERBPM = bpm;
         await axios.put(PULSESENSORS_ENDPOINT + ID, { 'state': 2 })
+        state.set('Scanning');
         timerInstance.start({ countdown: true, startValues: { seconds: 15 } });
       }
     })
