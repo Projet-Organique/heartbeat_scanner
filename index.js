@@ -1,4 +1,4 @@
-require("dotenv").config();
+//require("dotenv").config();
 const io = require('@pm2/io')
 const { createBluetooth } = require("./src");
 var { Timer } = require("easytimer.js");
@@ -56,9 +56,9 @@ async function init() {
 
   _HEARTRATE = heartrate;
 
-  _USER = await axios.get(USERS_ENDPOINT + 'randomUser').catch(async function (error) {
+  _USER = await axios.get('http://192.168.1.15:8080/api/users/randomUser').catch(async function (error) {
     console.log(error.response.data.message)
-    await axios.put(PULSESENSORS_ENDPOINT + ID, { 'state': 4 })
+    await axios.put('http://192.168.1.15:8080/api/pulsesensors/s001', { 'state': 4 })
     state.set('No lantern!');
     process.exit(1);
   });
@@ -73,7 +73,7 @@ async function init() {
     polarBPM.set(bpm);
   })
 
-  await axios.put(PULSESENSORS_ENDPOINT + ID, { 'state': 0 })
+  await axios.put('http://192.168.1.15:8080/api/pulsesensors/s001', { 'state': 0 })
   state.set('Loading');
 
   //const currentBPM = await getCurrentBPM();
@@ -87,15 +87,15 @@ async function init() {
     process.stdout.write("\r\x1b[K")
     process.stdout.write('Ready!')
 
-    await axios.put(PULSESENSORS_ENDPOINT + ID, { 'state': 1 })
+    await axios.put('http://192.168.1.15:8080/api/pulsesensors/s001', { 'state': 1 })
     state.set('Ready');
 
     _USERBPM = await scan();
 
-    await axios.put(USERS_ENDPOINT + _USER.data._id, { 'pulse': _USERBPM })
+    await axios.put('http://192.168.1.15:8080/api/users/' + _USER.data._id, { 'pulse': _USERBPM })
     doneBPM.set(_USERBPM);
  
-    await axios.put(PULSESENSORS_ENDPOINT + ID, { 'state': 3, 'rgb': _USER.data.rgb })
+    await axios.put('http://192.168.1.15:8080/api/pulsesensors/s001', { 'state': 3, 'rgb': _USER.data.rgb })
     state.set('done');
 
     process.exit(1);
@@ -152,7 +152,7 @@ async function scan() {
       let bpm = Math.max.apply(null, JSON.parse(json).data);
       if (bpm != 0) {
         scanBPM = bpm;
-        await axios.put(PULSESENSORS_ENDPOINT + ID, { 'state': 2 })
+        await axios.put('http://192.168.1.15:8080/api/pulsesensors/s001', { 'state': 2 })
         state.set('Scanning');
 
         timerInstance.start({ countdown: true, startValues: { seconds: 15 } });
