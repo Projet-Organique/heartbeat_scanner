@@ -34,7 +34,7 @@ async function init() {
   
   const { bluetooth, destroy } = createBluetooth();
   const adapter = await bluetooth.defaultAdapter();
-
+ 
   if (!(await adapter.isDiscovering()))
     await adapter.startDiscovery();
   console.log("Discovering device...");
@@ -94,8 +94,8 @@ async function init() {
 
     await axios.put(USERS_ENDPOINT + _USER.data._id, { 'pulse': _USERBPM })
     doneBPM.set(_USERBPM);
-
-    await axios.put(PULSESENSORS_ENDPOINT + ID, { 'state': 3 })
+ 
+    await axios.put(PULSESENSORS_ENDPOINT + ID, { 'state': 3, 'rgb': _USER.data.rgb })
     state.set('done');
 
     process.exit(1);
