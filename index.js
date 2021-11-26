@@ -1,12 +1,12 @@
-//require("dotenv").config();
-const io = require('@pm2/io')
+require("dotenv").config();
+//const io = require('@pm2/io')
 const { createBluetooth } = require("./src");
 var { Timer } = require("easytimer.js");
 var timerInstance = new Timer();
 const axios = require('axios');
 const { POLAR_MAC_ADRESSE, USERS_ENDPOINT, PULSESENSORS_ENDPOINT, ID } = process.env;
 
-const state = io.metric({
+/*const state = io.metric({
   name: 'Scanning state',
 })
 const polarBPM = io.metric({
@@ -22,7 +22,7 @@ const lanternSelected = io.metric({
 
 const timer = io.metric({
   name: 'The timer when the BPM is stable',
-})
+})*/
 
 let _USERBPM;
 let _USER;
@@ -63,8 +63,8 @@ async function init() {
     process.exit(1);
   });
 
-  lanternSelected.set(_USER);
-
+ // console.log(_USER.data._id);
+  //lanternSelected.set(_USER);
   await _HEARTRATE.startNotifications();
 
   _HEARTRATE.on("valuechanged", async (buffer) => {
@@ -73,8 +73,8 @@ async function init() {
     polarBPM.set(bpm);
   })
 
-  await axios.put('http://192.168.1.15:8080/api/pulsesensors/s001', { 'state': 0 })
-  state.set('Loading');
+  await axios.put(PULSESENSORS_ENDPOINT + ID, { 'state': 0 })
+  //state.set('Loading');
 
   //const currentBPM = await getCurrentBPM();
   //console.log(currentBpm);
@@ -86,19 +86,16 @@ async function init() {
     //clearInterval(twirlTimer)
     process.stdout.write("\r\x1b[K")
     process.stdout.write('Ready!')
-
-    await axios.put('http://192.168.1.15:8080/api/pulsesensors/s001', { 'state': 1 })
-    state.set('Ready');
+    await axios.put(PULSESENSORS_ENDPOINT + ID, { 'state': 1 })
+  //  state.set('Ready');
+    //set a presence detection to start notification
 
     _USERBPM = await scan();
-
-    await axios.put('http://192.168.1.15:8080/api/users/' + _USER.data._id, { 'pulse': _USERBPM })
-    doneBPM.set(_USERBPM);
- 
-    await axios.put('http://192.168.1.15:8080/api/pulsesensors/s001', { 'state': 3, 'rgb': _USER.data.rgb })
-    state.set('done');
-
-    process.exit(1);
+  //  userBPM.set(_USERBPM);
+    //console.log('_USERBPM', _USERBPM);
+    await axios.put(USERS_ENDPOINT + _USER.data._id, { 'pulse': _USERBPM })
+    await axios.put(PULSESENSORS_ENDPOINT + ID, { 'state': 3 })
+  //  state.set('done');
   }
 }
 
@@ -140,8 +137,8 @@ async function scan() {
   return new Promise(async (resolve, reject) => {
     let scanBPM;
     timerInstance.addEventListener("secondsUpdated", function (e) {
-      timer.set(timerInstance.getTimeValues().toString())
-      console.log(timerInstance.getTimeValues().toString());
+     // timer.set(timerInstance.getTimeValues().toString())
+      //console.log(timerInstance.getTimeValues().toString());
     });
     timerInstance.addEventListener("targetAchieved", async function (e) {
       resolve(scanBPM);
